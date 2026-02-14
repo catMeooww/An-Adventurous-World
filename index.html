@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>An Adventurous World</title>
+    <link rel="stylesheet" href="play.css">
+    <script src="serverdat.js"></script>
+    <style>
+        body {
+            margin: 0px;
+            padding: 0px;
+            background-image: url(StoneBar.png);
+            text-align: center;
+            overflow-y: visible;
+            color: white;
+        }
+
+        #main-ui {
+            background: url(CraftyAdventureBg.png);
+            background-size: cover;
+            margin-top: 100px;
+            padding: 10px;
+        }
+
+        #main-ui button {
+            width: 90%;
+            padding: 1%;
+            margin: 1%;
+            background-color: rgba(0, 0, 0, 0.6);
+            border: black outset 2px;
+            color: cornflowerblue;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="ui" id="options">
+        <button id="gamebtn">Adventurous World</button>
+        <button onclick="levels()">Play</button>
+        <button onclick="redirect(2)">Community Maps</button>
+        <button onclick="redirect(1)">Account</button>
+    </div>
+    <section id="main-ui">
+        <br><br><br><br><br><br><br><br>
+        <button onclick="levels()">Play</button>
+        <button onclick="redirect(2)">Community Maps</button>
+        <button onclick="redirect(3)">Map Editor</button>
+        <br><br><br><br>
+    </section>
+    <hr>
+    <h3>An Adventurous World</h3>
+    <label>By Cat Meooww</label>
+    <hr>
+    <h4>Also try other games:</h4>
+    <a href="https://catmeooww.github.io/CatMeooww-GamingArea/">Cat Meooww Games page</a><br>
+    <a href="https://catmeooww.github.io/Crafty-Adventure-Classical/">The crafty version of Adventurous World</a><br>
+    <hr>
+</body>
+
+</html>

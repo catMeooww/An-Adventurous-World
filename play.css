@@ -1,0 +1,92 @@
+body{
+    margin: 0px;
+    padding: 0px;
+    overflow: hidden;
+    background-color: black;
+}
+
+.menu{
+    position: fixed;
+    top: 10%;
+    left: 10%;
+    width: 80%;
+    height: 80%;
+    background-color: rgba(0, 0, 0, 0.9);
+    border: 2px outset white;
+    z-index: 15;
+    text-align: center;
+    color: aliceblue;
+    visibility: hidden;
+    overflow-y: auto;
+}
+
+.menu button{
+    width: 90%;
+    margin: 10px;
+    padding: 5px;
+    background-color: green;
+    border: white outset 2px;
+    color:white;
+}
+
+.menu input{
+    width: 90%;
+    margin: 10px;
+    padding: 5px;
+    background-color: black;
+    border: white outset 2px;
+    color:white;
+}
+
+.ui{
+    position: fixed;
+    height: 100px;
+    width: 100%;
+    background-image: url(StoneBar.png);
+    z-index: 10;
+    align-content: center;
+    text-align: right;
+}
+
+.ui button{
+    width: 300px;
+    height: 80%;
+    margin: 5px;
+    background-color: rgba(0, 0, 0, 0.2);
+    border: black outset 5px;
+    color:white;
+    font-size: large;
+    color: cornflowerblue;
+}
+
+.ui button:hover,#main-ui button:hover{
+    border-color: cyan;
+    color:cyan;
+    cursor: pointer;
+}
+
+#gamebtn{
+    float: left;
+    font-weight: bold;
+}
+
+#options{
+    top:0px
+}
+
+#inventory{
+    bottom: 0px;
+    text-align: center;
+}
+
+#inventory img{
+    width: 50px;
+}
+#inventory div, #block-selector div{
+    background-color: rgba(0, 0, 0, 0.5);
+    border: 2px outset white;
+    width: max-content;
+    padding: 5px;
+    color:white;
+    cursor: pointer;
+}

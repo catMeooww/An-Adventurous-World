@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Adventurous World: Create</title>
+    <link rel="stylesheet" href="play.css">
+    <script src="serverdat.js"></script>
+    <script src="p5.min.js"></script>
+    <script src="p5.dom.min.js"></script>
+    <script src="p5.play.js"></script>
+    <script src="sketch.js"></script>
+    <style>
+        #block-selector section {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr;
+            border-top: 2px aliceblue ridge;
+            gap: 10px;
+        }
+
+        #block-selector img {
+            width: 50px;
+        }
+
+        #block-config button, #block-config-edit button {
+            background-color: blue;
+        }
+
+        #block-config input, #block-config-edit input {
+            width: 25%;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="menu" id="map-selector" style="visibility: visible;">
+        <h1>Adventurous World Map Editor</h1>
+        <hr>
+        <p>Start new Project</p>
+        <input type="text" id="newMap">
+        <button onclick="startNew()">create</button>
+        <p>Load from File</p>
+        <input type="file" onchange="loadMapFile(event)" accept=".craftymap">
+        <hr>
+        <p>Published Projects</p>
+        <div id="public-maps" onload="listPublished()">
+
+        </div>
+    </div>
+    <div class="menu" id="map-exporter">
+        <button onclick="toggleExportMenu()">Close</button>
+        <h2>Map Saving</h2>
+        <hr>
+        <p>Download map file</p>
+        <button onclick="downloadMap()" title=".craftymap">Download</button>
+        <hr>
+        <p>Publish your map</p>
+    </div>
+    <div class="menu" id="block-edit">
+        <button onclick="toggleBlockEditor()">Close</button>
+        <p>block position</p>
+        <input id="bpc1" type="number">
+        <input id="bpc2" type="number">
+        <hr>
+        <p>block data</p>
+        <span id="block-config-edit" style="width: 100%;"></span>
+        <hr>
+        <button onclick="applyBlockEditions()">Save</button>
+    </div>
+    <div class="menu" id="block-selector">
+        <button onclick="toggleBlockSelector()">Close</button>
+        <span id="block-config" style="width: 100%;"></span>
+        <h2>Map Tools Selector</h2>
+        <section>
+            <div onclick="selectBlock(0)">
+                <img src="./interactor_assets/pickaxe.jpg">
+            </div>
+            <div onclick="selectBlock(1)">
+                <img src="./interactor_assets/axe.png">
+            </div>
+        </section>
+        <h2>Map Blocks Selector</h2>
+        <section>
+            <div onclick="selectBlock(2)">
+                <img src="./block_assets/Dirt.jpg">
+            </div>
+            <div onclick="selectBlock(3)">
+                <img src="./block_assets/Grass.jpg">
+            </div>
+            <div onclick="selectBlock(4)">
+                <img src="./block_assets/Leaves.jpg">
+            </div>
+            <div onclick="selectBlock(5)">
+                <img src="./block_assets/Planks.jpg">
+            </div>
+            <div onclick="selectBlock(6)">
+                <img src="./block_assets/stone.png">
+            </div>
+            <div onclick="selectBlock(7)">
+                <img src="./block_assets/Wood.jpg">
+            </div>
+            <div onclick="selectBlock(8)">
+                <img src="./block_assets/quartz.png">
+            </div>
+            <div onclick="selectBlock(9)">
+                <img src="./block_assets/glass.png">
+            </div>
+            <div onclick="selectBlock(10)">
+                <img src="./block_assets/SlimeBlock.png">
+            </div>
+            <div onclick="selectBlock(11)">
+                <img src="./block_assets/EnderFinish.png">
+            </div>
+            <div onclick="selectBlock(12)">
+                <img src="./block_assets/EnderTeleporter.png">
+            </div>
+            <div onclick="selectBlock(13)">
+                <img src="./block_assets/spawner.png">
+            </div>
+        </section>
+    </div>
+    <div class="ui" id="options">
+        <button id="gamebtn">Adventurous World</button>
+        <button onclick="runGame()">Run Game</button>
+        <button onclick="toggleDataMenu()"><b id="mapbtn"></b> - Map Data</button>
+        <button onclick="toggleExportMenu()">Export/Publish Map</button>
+    </div>
+    <div id="canvas-holder"></div>
+    <div class="ui" id="inventory">
+        <div onclick="toggleBlockSelector()">
+            <label>Selected Block</label><br>
+            <img id="selected-asset" src="./block_assets/Dirt.jpg">
+        </div>
+    </div>
+    <script>
+        //editor initialization
+        editing = null;
+        menuOpen = true;
+        selectionData = { "solid": true };
+        isCreator = true;
+        inventory = [{ "type": "dirt", "solid": true }];
+        selectFromInventory(0);
+        //map loading
+        function showMapData() {
+            document.getElementById("mapbtn").innerHTML = mapdata["name"];
+        }
+        function startNew() {
+            mapdata["name"] = document.getElementById("newMap").value;
+            document.getElementById("map-selector").style.visibility = "hidden";
+            setTimeout(() => { menuOpen = false; showMapData() }, 500);
+        }
+        function loadMapFile(event) {
+            loadUploadMap(event);
+            document.getElementById("map-selector").style.visibility = "hidden";
+            setTimeout(() => { menuOpen = false; showMapData() }, 500);
+        }
+        //block selectors
+        function toggleBlockSelector() {
+            if (document.getElementById("block-selector").style.visibility == "visible") {
+                document.getElementById("block-selector").style.visibility = "hidden";
+                setTimeout(() => { menuOpen = false }, 500);
+            } else {
+                document.getElementById("block-selector").style.visibility = "visible";
+                menuOpen = true;
+            }
+        }
+        function toggleBlockEditor() {
+            document.getElementById("block-edit").style.visibility = "hidden";
+            editing = null;
+            selectionData = { "solid": true };
+            setTimeout(() => { menuOpen = false }, 500);
+        }
+        function selectBlock(type) {
+            selectionData = { "solid": true };
+            switch (type) {
+                case 0:
+                    inventory = [{ "type": "pickaxe" }];
+                    showBlockConfigs('none');
+                    document.getElementById("selected-asset").src = "./interactor_assets/pickaxe.jpg";
+                    break;
+                case 1:
+                    inventory = [{ "type": "axe" }];
+                    showBlockConfigs('none');
+                    document.getElementById("selected-asset").src = "./interactor_assets/axe.png";
+                    break;
+                case 2:
+                    inventory = [{ "type": "dirt", ...selectionData }];
+                    showBlockConfigs('dirt');
+                    document.getElementById("selected-asset").src = "./block_assets/Dirt.jpg";
+                    break;
+                case 3:
+                    inventory = [{ "type": "grass", ...selectionData }];
+                    showBlockConfigs('grass');
+                    document.getElementById("selected-asset").src = "./block_assets/Grass.jpg";
+                    break;
+                case 4:
+                    inventory = [{ "type": "leaves", ...selectionData }];
+                    showBlockConfigs('leaves');
+                    document.getElementById("selected-asset").src = "./block_assets/Leaves.jpg";
+                    break;
+                case 5:
+                    inventory = [{ "type": "planks", ...selectionData }];
+                    showBlockConfigs('planks');
+                    document.getElementById("selected-asset").src = "./block_assets/Planks.jpg";
+                    break;
+                case 6:
+                    inventory = [{ "type": "stone", ...selectionData }];
+                    showBlockConfigs('stone');
+                    document.getElementById("selected-asset").src = "./block_assets/stone.png";
+                    break;
+                case 7:
+                    inventory = [{ "type": "wood", ...selectionData }];
+                    showBlockConfigs('wood');
+                    document.getElementById("selected-asset").src = "./block_assets/Wood.jpg";
+                    break;
+                case 8:
+                    selectionData["tint"] = [255, 255, 255, 255];
+                    inventory = [{ "type": "quartz", ...selectionData }];
+                    showBlockConfigs('quartz');
+                    document.getElementById("selected-asset").src = "./block_assets/quartz.png";
+                    break;
+                case 9:
+                    selectionData["tint"] = [255, 255, 255, 150];
+                    inventory = [{ "type": "glass", ...selectionData }];
+                    showBlockConfigs('glass');
+                    document.getElementById("selected-asset").src = "./block_assets/glass.png";
+                    break;
+                case 10:
+                    selectionData["interactive"] = true;
+                    selectionData["force"] = 10;
+                    inventory = [{ "type": "slime", ...selectionData }];
+                    showBlockConfigs('slime');
+                    document.getElementById("selected-asset").src = "./block_assets/SlimeBlock.png";
+                    break;
+                case 11:
+                    selectionData["interactive"] = true;
+                    inventory = [{ "type": "final", ...selectionData }];
+                    showBlockConfigs('final');
+                    document.getElementById("selected-asset").src = "./block_assets/EnderFinish.png";
+                    break;
+                case 12:
+                    selectionData["interactive"] = true;
+                    selectionData["target"] = [0, 0];
+                    inventory = [{ "type": "teleporter", ...selectionData }];
+                    showBlockConfigs('teleporter');
+                    document.getElementById("selected-asset").src = "./block_assets/EnderTeleporter.png";
+                    break;
+                case 13:
+                    selectionData["interactive"] = true;
+                    selectionData["monster"] = "none";
+                    inventory = [{ "type": "spawner", ...selectionData }];
+                    showBlockConfigs('spawner');
+                    document.getElementById("selected-asset").src = "./block_assets/spawner.png";
+                    break;
+                default:
+                    inventory = [{ "type": "none" }]
+                    showBlockConfigs('none');
+                    document.getElementById("selected-asset").src = "";
+                    break;
+            }
+            selectFromInventory(0);
+        }
+        //configs
+        function showBlockConfigs(type) {
+            document.getElementById("block-config").innerHTML = "";
+            document.getElementById("block-config-edit").innerHTML = "";
+            configdiv = "block-config";
+            if (editing != null) {
+                configdiv = "block-config-edit";
+            }
+            switch (type) {
+                case 'dirt':
+                    document.getElementById(configdiv).innerHTML += "<button onclick='toggleSolidBlock()'>Is solid: " + selectionData["solid"] + "</button>";
+                    break;
+                case 'grass':
+                    document.getElementById(configdiv).innerHTML += "<button onclick='toggleSolidBlock()'>Is solid: " + selectionData["solid"] + "</button>";
+                    break;
+                case 'leaves':
+                    document.getElementById(configdiv).innerHTML += "<button onclick='toggleSolidBlock()'>Is solid: " + selectionData["solid"] + "</button>";
+                    break;
+                case 'planks':
+                    document.getElementById(configdiv).innerHTML += "<button onclick='toggleSolidBlock()'>Is solid: " + selectionData["solid"] + "</button>";
+                    break;
+                case 'stone':
+                    document.getElementById(configdiv).innerHTML += "<button onclick='toggleSolidBlock()'>Is solid: " + selectionData["solid"] + "</button>";
+                    break;
+                case 'wood':
+                    document.getElementById(configdiv).innerHTML += "<button onclick='toggleSolidBlock()'>Is solid: " + selectionData["solid"] + "</button>";
+                    break;
+                case 'quartz':
+                    document.getElementById(configdiv).innerHTML += "<button onclick='toggleSolidBlock()'>Is solid: " + selectionData["solid"] + "</button>";
+                    document.getElementById(configdiv).innerHTML += "<input id='t1' value='" + selectionData["tint"][0] + "'><input id='t2' value='" + selectionData["tint"][1] + "'><input id='t3' value='" + selectionData["tint"][2] + "'><button onclick='addBlockTint(false)'>Change Color</button>";
+                    break;
+                case 'glass':
+                    document.getElementById(configdiv).innerHTML += "<button onclick='toggleSolidBlock()'>Is solid: " + selectionData["solid"] + "</button>";
+                    document.getElementById(configdiv).innerHTML += "<input id='t1' value='" + selectionData["tint"][0] + "'><input id='t2' value='" + selectionData["tint"][1] + "'><input id='t3' value='" + selectionData["tint"][2] + "'><input id='t4' value='" + selectionData["tint"][3] + "'><button onclick='addBlockTint(true)'>Change Color</button>";
+                    break;
+                case 'slime':
+                    document.getElementById(configdiv).innerHTML += "<input id='f1' value='" + selectionData["force"] + "'><button onclick='addBlockForce()'>Change Force</button>";
+                    break;
+                case 'final':
+                    break;
+                case 'teleporter':
+                    document.getElementById(configdiv).innerHTML += "<input id='c1' value='" + selectionData["target"][0] + "'><input id='c2' value='" + selectionData["target"][1] + "'><button onclick='addBlockTarget()'>Change Target</button>";
+                    break;
+                case 'spawner':
+                    break;
+                default:
+                    break;
+            }
+        }
+        function editBlock(id) {
+            editing = id;
+            if (id != null) {
+                selectionData = mapdata["blocks"][id];
+                document.getElementById("bpc1").value = selectionData["x"]/50;
+                document.getElementById("bpc2").value = selectionData["y"]/50;
+                showBlockConfigs(selectionData["type"]);
+                document.getElementById("block-edit").style.visibility = "visible";
+                menuOpen = true;
+            }
+        }
+        function applyBlockEditions() {
+            mapdata["blocks"][editing]["x"] = Number(document.getElementById("bpc1").value)*50;
+            mapdata["blocks"][editing]["y"] = Number(document.getElementById("bpc2").value)*50;
+            toggleBlockEditor();
+        }
+        function toggleSolidBlock() {
+            type = inventory[0]["type"]
+            selectionData["solid"] = !selectionData["solid"];
+            showBlockConfigs(type);
+            inventory = [{ "type": type, ...selectionData }];
+        }
+        function addBlockTint(alpha) {
+            type = inventory[0]["type"]
+            tint1 = Number(document.getElementById("t1").value);
+            tint2 = Number(document.getElementById("t2").value);
+            tint3 = Number(document.getElementById("t3").value);
+            tint4 = 255;
+            if (alpha) {
+                tint4 = Number(document.getElementById("t4").value);
+            }
+            selectionData["tint"] = [tint1, tint2, tint3, tint4];
+            showBlockConfigs(type);
+            inventory = [{ "type": type, ...selectionData }];
+        }
+        function addBlockForce() {
+            type = inventory[0]["type"]
+            force = Number(document.getElementById("f1").value);
+            selectionData["force"] = force;
+            showBlockConfigs(type);
+            inventory = [{ "type": type, ...selectionData }];
+        }
+        function addBlockTarget() {
+            type = inventory[0]["type"]
+            coordinate1 = Number(document.getElementById("c1").value);
+            coordinate2 = Number(document.getElementById("c2").value);
+            selectionData["target"] = [coordinate1, coordinate2];
+            showBlockConfigs(type);
+            inventory = [{ "type": type, ...selectionData }];
+        }
+        //game test
+        function endGame() {
+            isCreator = true;
+        }
+        function runGame() {
+            isCreator = !isCreator;
+            playerX = mapdata["spawn"][0];
+            playerY = mapdata["spawn"][1];
+        }
+        //export map
+        function downloadMap() {
+            filename = "unnamed.craftymap";
+            if (!mapdata["name"] == "") {
+                filename = mapdata["name"] + ".craftymap";
+            }
+            maptext = JSON.stringify(mapdata);
+            var downloader = document.createElement('a');
+            downloader.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(maptext));
+            downloader.setAttribute('download', filename);
+
+            downloader.style.display = 'none';
+            document.body.appendChild(downloader);
+
+            downloader.click();
+
+            document.body.removeChild(downloader);
+        }
+        function toggleExportMenu() {
+            if (document.getElementById("map-exporter").style.visibility == "visible") {
+                document.getElementById("map-exporter").style.visibility = "hidden";
+                setTimeout(() => { menuOpen = false }, 500);
+            } else {
+                document.getElementById("map-exporter").style.visibility = "visible";
+                menuOpen = true;
+            }
+        }
+    </script>
+</body>
+
+</html>

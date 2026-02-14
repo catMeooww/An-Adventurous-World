@@ -1,0 +1,17 @@
+{
+"name": "test",
+"creator": "",
+"bg": "",
+"void": 250,
+"spawn":[0,0],
+"blocks": [
+    {"type":"planks","x":0,"y":50,"solid":true,"tint":[0,0,255]},
+    {"type":"planks","x":100,"y":50,"solid":true},
+    {"type":"planks","x":50,"y":50,"solid":true},
+    {"type":"dirt","x":100,"y":0,"solid":true},
+    {"type":"planks","x":150,"y":50,"solid":false},
+    {"type":"slime","x":150,"y":100,"interactive":true,"force":20},
+    {"type":"final","x":150,"y":-250,"interactive":true},
+    {"type":"teleporter","x":-50,"y":0,"interactive":true,"target":[0,-250]}
+]
+}

@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Adventurous World: Play</title>
+    <link rel="stylesheet" href="play.css">
+    <script src="serverdat.js"></script>
+    <script src="p5.min.js"></script>
+    <script src="p5.dom.min.js"></script>
+    <script src="p5.play.js"></script>
+    <script src="sketch.js"></script>
+</head>
+
+<body>
+    <div class="menu" id="end-game">
+        <h1>You finished the Level</h1>
+        <img src="block_assets/EnderFinish.png">
+        <button onclick="spectator()">Spectate</button>
+        <button onclick="location.reload()">Restart</button>
+        <button onclick="leaveGame()">Back to level selector</button>
+        <p>Level: <b class="level-id"></b></p>
+    </div>
+    <div class="menu" id="pause-game">
+        <h1>Game Menu</h1>
+        <h2>Level: <b class="level-id"></b></h2>
+        <button onclick="pauseGame()">Continue</button>
+        <button onclick="location.reload()">Restart</button>
+        <button onclick="leaveGame()">Leave</button>
+    </div>
+    <div class="ui" id="options">
+        <button id="gamebtn">Adventurous World</button>
+        <button onclick="pauseGame()">Pause Game</button>
+        <button onclick="redirect(1)">Account</button>
+    </div>
+    <div id="canvas-holder"></div>
+    <div class="ui" id="inventory"></div>
+    <script>
+        //load level
+        selectedLevel = window.location.href;
+        selectedLevel = selectedLevel.split("?");
+        if (selectedLevel[1]) {
+            selectedLevel = selectedLevel[1].split("!");
+            if (selectedLevel[0] && selectedLevel[1]) {
+                if (selectedLevel[0] == "community") {
+                    loadServerMap(selectedLevel[1])
+                } else {
+                    loadOficialMap(selectedLevel[1]);
+                }
+            }else{
+                                window.location = "./";
+            }
+        }else{
+            window.location = "./";
+        }
+        //functions
+        function endGame() {
+            document.getElementById("end-game").style.visibility = "visible";
+            isCreator = true;
+            menuOpen = true;
+        }
+        function pauseGame() {
+            if (document.getElementById("pause-game").style.visibility == "visible") {
+                document.getElementById("pause-game").style.visibility = "hidden";
+                menuOpen = false;
+            } else {
+                document.getElementById("pause-game").style.visibility = "visible";
+                menuOpen = true;
+            }
+        }
+        function leaveGame() {
+            window.location = "./";
+        }
+        function spectator() {
+            document.getElementById('end-game').style.visibility = 'hidden';
+            menuOpen = false;
+        }
+    </script>
+</body>
+
+</html>
