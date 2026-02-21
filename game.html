@@ -5,7 +5,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Adventurous World: Play</title>
+    <link rel="shortcut icon" href="./interactor_assets/ExplorerPlayer.png" type="image/png">
     <link rel="stylesheet" href="play.css">
+    <script src="https://www.gstatic.com/firebasejs/8.3.2/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.3.2/firebase-database.js"></script>
     <script src="serverdat.js"></script>
     <script src="p5.min.js"></script>
     <script src="p5.dom.min.js"></script>
@@ -13,7 +16,7 @@
     <script src="sketch.js"></script>
 </head>
 
-<body>
+<body onload="loadUserData()">
     <div class="menu" id="end-game">
         <h1>You finished the Level</h1>
         <img src="block_assets/EnderFinish.png">
@@ -32,11 +35,30 @@
     <div class="ui" id="options">
         <button id="gamebtn">Adventurous World</button>
         <button onclick="pauseGame()">Pause Game</button>
-        <button onclick="redirect(1)">Account</button>
+        <button id="accountBtn" onclick="redirect(1)">Account</button>
     </div>
     <div id="canvas-holder"></div>
     <div class="ui" id="inventory"></div>
     <script>
+        function redirect(to){
+            switch (to){
+                case 1:
+                    window.location = "./login.html";
+                    break;
+                case 2:
+                    window.location = "./community.html";
+                    break;
+                case 3:
+                    window.location = "./creator.html";
+                    break;
+                default:
+                    window.location = "./";
+                    break;
+            }
+        }
+        function userLogged() {
+            document.getElementById("accountBtn").innerHTML = user;
+        }
         //load level
         selectedLevel = window.location.href;
         selectedLevel = selectedLevel.split("?");
@@ -44,7 +66,7 @@
             selectedLevel = selectedLevel[1].split("!");
             if (selectedLevel[0] && selectedLevel[1]) {
                 if (selectedLevel[0] == "community") {
-                    loadServerMap(selectedLevel[1])
+                    loadServerMap(selectedLevel[1]);
                 } else {
                     loadOficialMap(selectedLevel[1]);
                 }

@@ -65,6 +65,23 @@ body{
     cursor: pointer;
 }
 
+.mapdiv{
+    background-color: black;
+    border: 2px outset cornflowerblue;
+    color: gray;
+    width: 90%;
+    padding: 1%;
+    justify-self: center;
+    font-size: 18px;
+}
+
+.mapdiv:hover{
+    color:white;
+    border-color: cyan;
+    text-shadow: cyan 2px 2px 2px;
+    cursor: pointer;
+}
+
 #gamebtn{
     float: left;
     font-weight: bold;
@@ -77,6 +94,8 @@ body{
 #inventory{
     bottom: 0px;
     text-align: center;
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr;
 }
 
 #inventory img{
@@ -85,8 +104,8 @@ body{
 #inventory div, #block-selector div{
     background-color: rgba(0, 0, 0, 0.5);
     border: 2px outset white;
-    width: max-content;
     padding: 5px;
     color:white;
     cursor: pointer;
+    margin: 5px;
 }

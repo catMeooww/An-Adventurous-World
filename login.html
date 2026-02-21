@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Crafty Adventure - Player Login</title>
+    <link rel="shortcut icon" href="./interactor_assets/ExplorerPlayer.png" type="image/png">
+    <link rel="stylesheet" href="play.css">
+    <script src="https://www.gstatic.com/firebasejs/8.3.2/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.3.2/firebase-database.js"></script>
+    <script src="serverdat.js"></script>
+    <style>
+        body {
+            background: url('./background_assets/empty_bg.png');
+            background-size: cover;
+            background-position: center;
+            color: aliceblue;
+            margin-top: 10%;
+        }
+
+        #loginDiv {
+            background: rgba(0, 0, 0, 0.700);
+            border: 5px black outset;
+            width: 50%;
+            height: 300px;
+        }
+
+        #loginDiv button {
+            border: outset green 5px;
+            color: blue;
+            padding: 2px;
+            cursor: pointer;
+            margin: 10px;
+        }
+    </style>
+</head>
+
+<body onload="loadUserData()">
+    <div class="ui" id="options">
+        <button id="gamebtn">Adventurous World</button>
+        <button onclick="levels()">Play</button>
+        <button onclick="redirect(2)">Community Maps</button>
+        <button onclick="redirect(0)">Return</button>
+    </div>
+    <center>
+        <div id="loginDiv" style="display: flexbox;">
+            <h1 style="width: 90%;margin-top: 15px;">Login in An Adventurous World</h1>
+            <hr>
+            <div id="login-panel">
+                <label style="margin-right: 25px;">Player:</label><input type="text" id="login-username"><br><br>
+                <label>Password: </label><input type="password" id="login-userpassword">
+                <hr>
+                <button onclick="LogAccount()" style='background-color: chartreuse;'>Login</button>
+                <button onclick="createAccount()" style='background-color: cornflowerblue;'>Create</button>
+            </div>
+            <b id="login-error"></b>
+        </div>
+    </center>
+    <script>
+        function redirect(to){
+            switch (to){
+                case 1:
+                    window.location = "./login.html";
+                    break;
+                case 2:
+                    window.location = "./community.html";
+                    break;
+                case 3:
+                    window.location = "./creator.html";
+                    break;
+                default:
+                    window.location = "./";
+                    break;
+            }
+        }
+
+        if (Math.random() > 0.5) {
+            document.body.style.background = "url('./background_assets/plains_bg.png')";
+            document.body.style.backgroundSize = "cover";
+            document.body.style.backgroundPosition = "center";
+        } else {
+            document.body.style.background = "url('./background_assets/islandy_bg.png')";
+            document.body.style.backgroundSize = "cover";
+            document.body.style.backgroundPosition = "center";
+        }
+
+        function userLogged() {
+            document.getElementById("login-panel").innerHTML = "<h1>Player: " + user + "</h1><button onclick=logout() style='background-color: red;'>Log-Out</button>";
+        }
+
+        //login
+        function LogAccount() {
+            userinput = document.getElementById("login-username").value;
+            passwordinput = document.getElementById("login-userpassword").value;
+            if (userinput != "" && passwordinput != "") {
+                var userref = firebase.database().ref("/users/" + userinput + "/status");
+                var passref = firebase.database().ref("/users/" + userinput + "/password");
+                var isUserCreated;
+                var isJoining = false;
+                userref.on("value", data => {
+                    isUserCreated = data.val();
+                    if (!isJoining) {
+                        isJoining = true;
+                        if (isUserCreated == "online" || isUserCreated == "mod") {
+                            passref.on("value", data => {
+                                canPass = data.val();
+                                if (canPass == passwordinput) {
+                                    localStorage.setItem("user", userinput);
+                                    localStorage.setItem("password", passwordinput);
+                                    location.reload();
+                                } else {
+                                    document.getElementById("login-error").innerHTML = "Incorrect Password";
+                                    document.getElementById("login-userpassword").style.borderColor = "red";
+                                }
+                            })
+                        } else if (isUserCreated == "disabled") {
+                            document.getElementById("login-error").innerHTML = "This account got disabled";
+                            document.getElementById("login-username").style.borderColor = "red";
+                        } else {
+                            document.getElementById("login-error").innerHTML = "Incorrect Username";
+                            document.getElementById("login-username").style.borderColor = "red";
+                        }
+                    }
+                });
+            } else {
+                document.getElementById("login-error").innerHTML = "All the inputs need a value";
+                document.getElementById("login-username").style.borderColor = "yellow";
+                document.getElementById("login-userpassword").style.borderColor = "yellow";
+            }
+        }
+
+        function createAccount() {
+            userinput = document.getElementById("login-username").value;
+            passwordinput = document.getElementById("login-userpassword").value;
+            if (userinput != "" && passwordinput != "") {
+                var userref = firebase.database().ref("/users/" + userinput + "/status");
+                var isUserCreated;
+                var isJoining = false;
+                userref.on("value", data => {
+                    isUserCreated = data.val();
+                    if (!isJoining) {
+                        isJoining = true;
+                        if (isUserCreated == null) {
+                            firebase.database().ref("/users/").child(userinput).update({
+                                password: passwordinput,
+                                status: "online"
+                            });
+                            document.getElementById("login-error").innerHTML = "Account Sucessfuly Created";
+                        } else {
+                            document.getElementById("login-error").innerHTML = "This username already exists";
+                            document.getElementById("login-username").style.borderColor = "red";
+                        }
+                    }
+                });
+            } else {
+                document.getElementById("login-error").innerHTML = "All the inputs need a value";
+                document.getElementById("login-username").style.borderColor = "yellow";
+                document.getElementById("login-userpassword").style.borderColor = "yellow";
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem("user");
+            localStorage.removeItem("password");
+            location.reload();
+        }
+    </script>
+</body>
+
+</html>

@@ -5,13 +5,32 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Adventurous World: Create</title>
+    <link rel="shortcut icon" href="./interactor_assets/ExplorerPlayer.png" type="image/png">
     <link rel="stylesheet" href="play.css">
+    <script src="https://www.gstatic.com/firebasejs/8.3.2/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.3.2/firebase-database.js"></script>
     <script src="serverdat.js"></script>
     <script src="p5.min.js"></script>
     <script src="p5.dom.min.js"></script>
     <script src="p5.play.js"></script>
     <script src="sketch.js"></script>
     <style>
+        #map-selector{
+            top:0px;
+            left: 0px;
+            width: 100%;
+            height: 100%;
+            border: 0px;
+        }
+
+        #inventory{
+            grid-template-columns: 1fr 8fr;
+        }
+
+        #map-components{
+            overflow-y: scroll;
+        }
+
         #block-selector section {
             display: grid;
             grid-template-columns: 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr;
@@ -23,17 +42,37 @@
             width: 50px;
         }
 
-        #block-config button, #block-config-edit button {
+        #block-config button,
+        #block-config-edit button {
             background-color: blue;
         }
 
-        #block-config input, #block-config-edit input {
+        #block-config input,
+        #block-config-edit input {
             width: 25%;
+        }
+
+        #map-data img {
+            width: 100px;
+        }
+
+        #map-data .imgbtn {
+            width: fit-content;
+        }
+
+        #map-data div {
+            width: 90%;
+            margin: 10px;
+            padding: 5px;
+            background-color: black;
+            border: gray outset 2px;
+            color: gray;
+            justify-self: center;
         }
     </style>
 </head>
 
-<body>
+<body onload="loadUserData()">
     <div class="menu" id="map-selector" style="visibility: visible;">
         <h1>Adventurous World Map Editor</h1>
         <hr>
@@ -44,9 +83,34 @@
         <input type="file" onchange="loadMapFile(event)" accept=".craftymap">
         <hr>
         <p>Published Projects</p>
-        <div id="public-maps" onload="listPublished()">
-
+        <div id="public-maps">
+            <button onclick="redirect(1)">Log-in</button>
         </div>
+    </div>
+    <div class="menu" id="map-data">
+        <button onclick="toggleDataMenu()">Close</button>
+        <h2>Map Data</h2>
+        <hr>
+        <p>Name:</p>
+        <input id="changeName">
+        <hr>
+        <p>Creator:</p>
+        <div onclick="redirect(1)"><label id="changeCreator"></label></div>
+        <hr>
+        <p>Bg:</p>
+        <button onclick="selectBg(0)" class="imgbtn"><img src="./background_assets/empty_bg.png"></button>
+        <button onclick="selectBg(1)" class="imgbtn"><img src="./background_assets/plains_bg.png"></button>
+        <button onclick="selectBg(2)" class="imgbtn"><img src="./background_assets/islandy_bg.png"></button>
+        <div><label id="changeBG">empty</label></div>
+        <hr>
+        <p>Void:</p>
+        <input id="changeVoid" type="number">
+        <hr>
+        <p>Spawn:</p>
+        <input id="changeSpawnX" type="number">
+        <input id="changeSpawnY" type="number">
+        <hr>
+        <button onclick="changeMapData()">Change</button>
     </div>
     <div class="menu" id="map-exporter">
         <button onclick="toggleExportMenu()">Close</button>
@@ -56,6 +120,9 @@
         <button onclick="downloadMap()" title=".craftymap">Download</button>
         <hr>
         <p>Publish your map</p>
+        <div id="publish-map">
+            <button onclick="redirect(1)">Log-in</button>
+        </div>
     </div>
     <div class="menu" id="block-edit">
         <button onclick="toggleBlockEditor()">Close</button>
@@ -132,8 +199,27 @@
             <label>Selected Block</label><br>
             <img id="selected-asset" src="./block_assets/Dirt.jpg">
         </div>
+        <div id="map-components">
+            <label>Map Components</label>
+        </div>
     </div>
     <script>
+        function redirect(to){
+            switch (to){
+                case 1:
+                    window.open("./login.html", '_blank');
+                    break;
+                case 2:
+                    window.open("./community.html", '_blank');
+                    break;
+                case 3:
+                    window.open("./creator.html", '_blank');
+                    break;
+                default:
+                    window.open("./", '_blank');
+                    break;
+            }
+        }
         //editor initialization
         editing = null;
         menuOpen = true;
@@ -144,22 +230,26 @@
         //map loading
         function showMapData() {
             document.getElementById("mapbtn").innerHTML = mapdata["name"];
+            document.getElementById("map-components").innerHTML = "<label>Map Components</label>";
+            for (block of mapdata["blocks"]){
+                document.getElementById("map-components").innerHTML += "<p>"+block["type"]+"</p>";
+            }
         }
         function startNew() {
             mapdata["name"] = document.getElementById("newMap").value;
             document.getElementById("map-selector").style.visibility = "hidden";
-            setTimeout(() => { menuOpen = false; showMapData() }, 500);
+            setTimeout(() => { menuOpen = false; showMapData(); mapdata["creator"] = user; }, 500);
         }
         function loadMapFile(event) {
             loadUploadMap(event);
             document.getElementById("map-selector").style.visibility = "hidden";
-            setTimeout(() => { menuOpen = false; showMapData() }, 500);
+            setTimeout(() => { menuOpen = false; showMapData(); mapdata["creator"] = user; }, 500);
         }
         //block selectors
         function toggleBlockSelector() {
             if (document.getElementById("block-selector").style.visibility == "visible") {
                 document.getElementById("block-selector").style.visibility = "hidden";
-                setTimeout(() => { menuOpen = false }, 500);
+                setTimeout(() => { menuOpen = false; showMapData(); }, 500);
             } else {
                 document.getElementById("block-selector").style.visibility = "visible";
                 menuOpen = true;
@@ -314,16 +404,16 @@
             editing = id;
             if (id != null) {
                 selectionData = mapdata["blocks"][id];
-                document.getElementById("bpc1").value = selectionData["x"]/50;
-                document.getElementById("bpc2").value = selectionData["y"]/50;
+                document.getElementById("bpc1").value = selectionData["x"] / 50;
+                document.getElementById("bpc2").value = selectionData["y"] / 50;
                 showBlockConfigs(selectionData["type"]);
                 document.getElementById("block-edit").style.visibility = "visible";
                 menuOpen = true;
             }
         }
         function applyBlockEditions() {
-            mapdata["blocks"][editing]["x"] = Number(document.getElementById("bpc1").value)*50;
-            mapdata["blocks"][editing]["y"] = Number(document.getElementById("bpc2").value)*50;
+            mapdata["blocks"][editing]["x"] = Number(document.getElementById("bpc1").value) * 50;
+            mapdata["blocks"][editing]["y"] = Number(document.getElementById("bpc2").value) * 50;
             toggleBlockEditor();
         }
         function toggleSolidBlock() {
@@ -369,6 +459,51 @@
             playerX = mapdata["spawn"][0];
             playerY = mapdata["spawn"][1];
         }
+        //data map
+        function toggleDataMenu() {
+            if (document.getElementById("map-data").style.visibility == "visible") {
+                document.getElementById("map-data").style.visibility = "hidden";
+                setTimeout(() => { menuOpen = false }, 500);
+            } else {
+                document.getElementById("map-data").style.visibility = "visible";
+                menuOpen = true;
+                document.getElementById("changeName").value = mapdata["name"];
+                if(mapdata["creator"] != ""){
+                    document.getElementById("changeCreator").innerHTML = mapdata["creator"];
+                }else{
+                    document.getElementById("changeCreator").innerHTML = "Not Logged In";
+                }
+                document.getElementById("changeBG").innerHTML = mapdata["bg"];
+                document.getElementById("changeVoid").value = mapdata["void"];
+                document.getElementById("changeSpawnX").value = mapdata["spawn"][0];
+                document.getElementById("changeSpawnY").value = mapdata["spawn"][1];
+            }
+        }
+        function changeMapData(){
+            mapdata["name"] = document.getElementById("changeName").value;
+            mapdata["creator"] = user;
+            mapdata["bg"] = document.getElementById("changeBG").innerHTML;
+            mapdata["void"] = Number(document.getElementById("changeVoid").value);
+            mapdata["spawn"] = [
+                Number(document.getElementById("changeSpawnX").value),
+                Number(document.getElementById("changeSpawnY").value)
+            ];
+            showMapData();
+            toggleDataMenu();
+        }
+        function selectBg(id){
+            switch (id){
+                case 1:
+                    document.getElementById("changeBG").innerHTML = "plains";
+                    break;
+                case 2:
+                    document.getElementById("changeBG").innerHTML = "islandy";
+                    break;
+                default:
+                    document.getElementById("changeBG").innerHTML = "empty";
+                    break;
+            }
+        }
         //export map
         function downloadMap() {
             filename = "unnamed.craftymap";
@@ -379,13 +514,15 @@
             var downloader = document.createElement('a');
             downloader.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(maptext));
             downloader.setAttribute('download', filename);
-
             downloader.style.display = 'none';
             document.body.appendChild(downloader);
-
             downloader.click();
-
             document.body.removeChild(downloader);
+            toggleExportMenu()
+        }
+        function publishMap(){
+            firebase.database().ref("adventurous_world/maps/").push(mapdata);
+            toggleExportMenu()
         }
         function toggleExportMenu() {
             if (document.getElementById("map-exporter").style.visibility == "visible") {
@@ -395,6 +532,20 @@
                 document.getElementById("map-exporter").style.visibility = "visible";
                 menuOpen = true;
             }
+        }
+        function userLogged(){
+            document.getElementById("publish-map").innerHTML = "<button onclick='publishMap()'>Publish New</button>";
+            document.getElementById("public-maps").innerHTML = "";
+            firebase.database().ref("adventurous_world/maps/").once('value', function (snapshot) {
+                snapshot.forEach(function (childSnapshot) {
+                    childKey = childSnapshot.key; childData = childSnapshot.val();
+                    if(childData["creator"] == user){
+                        content = "<label>"+childData["name"]+"</label>";
+                        document.getElementById("publish-map").innerHTML += "<div class='mapdiv'>"+content+"</div>";
+                        document.getElementById("public-maps").innerHTML += "<div class='mapdiv'>"+content+"</div>";
+                    }
+                });
+            });
         }
     </script>
 </body>

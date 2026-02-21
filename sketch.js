@@ -1,4 +1,5 @@
 var mapdata = { "name": "", "creator": "", "bg": "plains", "void": 120, "spawn": [0, 0], "blocks": [] }
+
 gameWidth = window.innerWidth;
 gameHeight = window.innerHeight;
 
@@ -66,6 +67,12 @@ function loadOficialMap(map) {
         });
 }
 
+function loadServerMap(map){
+    firebase.database().ref("adventurous_world/maps/"+map).once('value',data=>{
+        mapdata = data.val();
+    })
+}
+
 function collision(ax, ay, bx, by) {
     if (ax < bx + 50 && ax + 50 > bx && ay < by + 50 && ay + 50 > by) {
         return true;
@@ -90,8 +97,8 @@ function preload() {
     bg_islandy = loadImage("./background_assets/islandy_bg.png");
     bg_plains = loadImage("./background_assets/plains_bg.png");
     asset_player = loadImage("./interactor_assets/ExplorerPlayer.png");
-    asset_player_flip = loadImage("./interactor_assets/ExplorerPlayer-flipped.png");
-    asset_axe = loadImage("./interactor_assets/Axe.png");
+    asset_player_flip = loadImage("./interactor_assets/ExplorerPlayer-Flipped.png");
+    asset_axe = loadImage("./interactor_assets/axe.png");
     asset_pick = loadImage("./interactor_assets/pickaxe.jpg");
     block_dirt = loadImage("./block_assets/Dirt.jpg");
     block_grass = loadImage("./block_assets/Grass.jpg");

@@ -38,29 +38,21 @@
     </style>
 </head>
 
-<body onload="loadUserData()">
+<body onload="loadUserData();listMaps()">
     <div class="ui" id="options">
         <button id="gamebtn">Adventurous World</button>
-        <button onclick="levels()">Play</button>
-        <button onclick="redirect(2)">Community Maps</button>
+        <button onclick="redirect(0)">Play</button>
+        <button onclick="redirect(0)">Official Maps</button>
         <button id="accountBtn" onclick="redirect(1)">Account</button>
     </div>
     <section id="main-ui">
         <br><br><br><br><br><br><br><br>
-        <button onclick="levels()">Play</button>
-        <button onclick="redirect(2)">Community Maps</button>
-        <button onclick="redirect(3)">Map Editor</button>
+        <button onclick="redirect(0)">Play Official Maps</button>
+        <button onclick="redirect(3)">Create your Map</button>
         <br><br><br><br>
     </section>
     <hr>
-    <h3>An Adventurous World</h3>
-    <label>By Cat Meooww</label>
-    <hr>
-    <h4>Also try other games:</h4>
-    <a href="https://catmeooww.github.io/CatMeooww-GamingArea/">Cat Meooww Games page</a><br>
-    <a href="https://catmeooww.github.io/Crafty-Adventure-Classical/">The crafty version of Adventurous World</a><br>
-    <hr>
-    <label style="float: right;">V.Realease 1</label>
+    <div id="levels"></div>
     <script>
         function redirect(to){
             switch (to){
@@ -77,6 +69,25 @@
                     window.location = "./";
                     break;
             }
+        }
+
+        function goToMap(id){
+            window.location = "./game.html?community!"+id;
+        }
+
+        function listMaps(){
+            firebase.database().ref("adventurous_world/maps/").on('value', function (snapshot) {
+                document.getElementById("levels").innerHTML = "";
+                snapshot.forEach(function (childSnapshot) {
+                    childKey = childSnapshot.key; childData = childSnapshot.val();
+                    r = Math.floor(Math.random()*200);
+                    g = Math.floor(Math.random()*200);
+                    b = Math.floor(Math.random()*200);
+                    style = "class='mapdiv' style='background-color:rgb("+r+","+g+","+b+");'";
+                    content = "<h3>"+childData["name"]+"</h3><label>By: "+childData["creator"]+"</label>";
+                    document.getElementById("levels").innerHTML += "<div "+style+" onclick='"+'goToMap("'+childKey+'")'+"'>"+content+"</div>";
+                });
+            });
         }
 
         function userLogged() {
