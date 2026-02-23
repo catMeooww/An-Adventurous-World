@@ -185,6 +185,9 @@
             <div onclick="selectBlock(13)">
                 <img src="./block_assets/spawner.png">
             </div>
+            <div onclick="selectBlock(14)">
+                <img src="./block_assets/Chest.png">
+            </div>
         </section>
     </div>
     <div class="ui" id="options">
@@ -199,7 +202,7 @@
             <label>Selected Block</label><br>
             <img id="selected-asset" src="./block_assets/Dirt.jpg">
         </div>
-        <div id="map-components">
+        <div id="map-components" onmouseenter="showMapData()">
             <label>Map Components</label>
         </div>
     </div>
@@ -239,6 +242,7 @@
             mapdata["name"] = document.getElementById("newMap").value;
             document.getElementById("map-selector").style.visibility = "hidden";
             setTimeout(() => { menuOpen = false; showMapData(); mapdata["creator"] = user; }, 500);
+            ready = true;
         }
         function loadMapFile(event) {
             loadUploadMap(event);
@@ -249,7 +253,7 @@
         function toggleBlockSelector() {
             if (document.getElementById("block-selector").style.visibility == "visible") {
                 document.getElementById("block-selector").style.visibility = "hidden";
-                setTimeout(() => { menuOpen = false; showMapData(); }, 500);
+                setTimeout(() => { menuOpen = false; }, 500);
             } else {
                 document.getElementById("block-selector").style.visibility = "visible";
                 menuOpen = true;
@@ -342,6 +346,13 @@
                     inventory = [{ "type": "spawner", ...selectionData }];
                     showBlockConfigs('spawner');
                     document.getElementById("selected-asset").src = "./block_assets/spawner.png";
+                    break;
+                case 14:
+                    selectionData["interactive"] = true;
+                    selectionData["items"] = "none";
+                    inventory = [{ "type": "chest", ...selectionData }];
+                    showBlockConfigs('chest');
+                    document.getElementById("selected-asset").src = "./block_assets/Chest.png";
                     break;
                 default:
                     inventory = [{ "type": "none" }]

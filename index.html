@@ -35,10 +35,46 @@
             border: black outset 2px;
             color: cornflowerblue;
         }
+
+        #levels{
+            justify-items: center;
+            overflow-y: scroll;
+        }
+
+        #levels div{
+            display: block;
+            width: 80%;
+            border:outset 3px black;
+            background-color: rgb(22, 22, 22);
+            margin: 10px;
+            padding: 2px;
+        }
+
+        #levels div:hover{
+            box-shadow: 2px 2px 2px purple;
+            border-color: green;
+            cursor: pointer;
+        }
+
+        #levels img{
+            width: 80%;
+            border: solid 2px gray;
+        }
     </style>
 </head>
 
 <body onload="loadUserData()">
+    <div class="menu" id="levels">
+        <button onclick="levels()">Close</button>
+        <div id="The_Camp" onclick="goToMap(this.id)">
+            <img src="./level_covers/The_Camp.png" class="levelimg"><br>
+            <label>The Camp</label>
+        </div>
+        <div id="Path_In_Forest" onclick="goToMap(this.id)">
+            <img src="./level_covers/Path_In_Forests.png" class="levelimg"><br>
+            <label>Path in the Forests</label>
+        </div>
+    </div>
     <div class="ui" id="options">
         <button id="gamebtn">Adventurous World</button>
         <button onclick="levels()">Play</button>
@@ -76,6 +112,24 @@
                 default:
                     window.location = "./";
                     break;
+            }
+        }
+
+        function goToMap(id){
+            window.location = "./game.html?official!"+id;
+        }
+
+        function levels(){
+            if(document.getElementById("levels").style.visibility == "visible"){
+                document.getElementById("levels").style.visibility = "hidden";
+            }else{
+                document.getElementById("levels").style.visibility = "visible";
+                for(e=0;e<document.getElementsByClassName("levelimg").length;e++){
+                    r = Math.floor(Math.random()*255);
+                    g = Math.floor(Math.random()*255);
+                    b = Math.floor(Math.random()*255);
+                    document.getElementsByClassName("levelimg").item(e).style.borderColor = "rgb("+r+","+g+","+b+")";
+                }
             }
         }
 

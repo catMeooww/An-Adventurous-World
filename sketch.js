@@ -1,3 +1,5 @@
+var ready = false;
+
 var mapdata = { "name": "", "creator": "", "bg": "plains", "void": 120, "spawn": [0, 0], "blocks": [] }
 
 gameWidth = window.innerWidth;
@@ -41,6 +43,8 @@ function loadUploadMap(event) {
         try {
             jsonData = JSON.parse(jsonString);
             mapdata = jsonData;
+            ready = true;
+            showBasicInfo();
         } catch (error) {
             console.error('Error loading Map File: ' + error);
         }
@@ -60,16 +64,19 @@ function loadOficialMap(map) {
             mapdata = data;
             playerX = mapdata["spawn"][0];
             playerY = mapdata["spawn"][1];
-            showBasicInfo()
+            ready = true;
+            showBasicInfo();
         })
         .catch(error => {
             console.error('Error loading Map File: ' + error);
         });
 }
 
-function loadServerMap(map){
-    firebase.database().ref("adventurous_world/maps/"+map).once('value',data=>{
+function loadServerMap(map) {
+    firebase.database().ref("adventurous_world/maps/" + map).once('value', data => {
         mapdata = data.val();
+        ready = true;
+        showBasicInfo();
     })
 }
 
@@ -111,162 +118,167 @@ function preload() {
     block_slime = loadImage("./block_assets/SlimeBlock.png");
     block_final = loadImage("./block_assets/EnderFinish.png");
     block_teleporter = loadImage("./block_assets/EnderTeleporter.png");
+    block_chest = loadImage("./block_assets/Chest.png");
     block_spawner = loadImage("./block_assets/spawner.png");
 }
 
 function setup() {
     canvas = createCanvas(gameWidth, gameHeight);
     canvas.parent("canvas-holder");
-    frameRate(80);
+    frameRate(100);
 }
 
 lowUpdates = 0;
 
 function draw() {
-    //data
-    hovering = null;
-    gridX = Math.floor((mouseX + (camera.x - gameWidth / 2)) / 50) * 50;
-    gridY = Math.floor((mouseY + (camera.y + 20 - gameHeight / 2)) / 50) * 50;
-    distX = Math.abs(playerX - gridX);
-    distY = Math.abs(playerY - gridY);
-    //controls
-    if (!menuOpen) {
-        if (isCreator && (keyDown("s") || keyDown("down"))) {
-            playerVelocityY = 5;
-        } else if (isCreator) {
-            playerVelocityY = 0;
-        } else {
-            playerVelocityY += gravity;
-        }
-        if ((keyDown("w") || keyDown("up") || keyDown("space")) && isCreator) {
-            playerVelocityY = -5;
-        } else if ((keyDown("w") || keyDown("up") || keyDown("space")) && canJump) {
-            playerVelocityY = -10;
-        }
-        if (keyDown("a") || keyDown("left")) {
-            playerVelocityX = -5;
-        }
-        else if (keyDown("d") || keyDown("right")) {
-            playerVelocityX = 5;
-        } else {
-            playerVelocityX = 0;
-        }
-    }
-    //bg
-    if (mapdata["bg"] == "plains") {
-        image(bg_plains, camera.x - gameWidth / 2, camera.y - gameHeight / 2, gameWidth, gameHeight);
-    } else if (mapdata["bg"] == "islandy") {
-        image(bg_islandy, camera.x - gameWidth / 2, camera.y - gameHeight / 2, gameWidth, gameHeight);
-    } else {
-        image(bg_empty, camera.x - gameWidth / 2, camera.y - gameHeight / 2, gameWidth, gameHeight);
-    }
-    //blocks
-    readingBlockId = 0;
-    canJump = false;
-    for (block of mapdata["blocks"]) {
-        if (Math.abs(playerX - block["x"]) < gameWidth/2 && Math.abs(playerY - block["y"]) < gameHeight/3) {
-            if (block["interactive"]) {
-                if (collision(playerX, playerY, block["x"], block["y"]) && !isCreator) {
-                    functionalBlock(readingBlockId);
-                }
-            } else if (block["solid"]) {
-                if (collision(playerX + playerVelocityX, playerY, block["x"], block["y"]) && !isCreator) {
-                    playerVelocityX = 0;
-                }
-                if (collision(playerX, playerY + playerVelocityY, block["x"], block["y"]) && !isCreator) {
-                    playerVelocityY = 0;
-                }
-                if (collision(playerX, playerY + 10, block["x"], block["y"]) || isCreator) {
-                    canJump = true;
-                }
-            }
-            if (block["tint"] && block["solid"]) {
-                tint(block["tint"][0], block["tint"][1], block["tint"][2], block["tint"][3]);
-            } else if (block["tint"] && !block["solid"]) {
-                tint(block["tint"][0] - 50, block["tint"][1] - 50, block["tint"][2] - 50, block["tint"][3]);
-            } else if (!block["solid"]) {
-                tint(150, 150, 150);
+    if (ready) {
+        //data
+        hovering = null;
+        gridX = Math.floor((mouseX + (camera.x - gameWidth / 2)) / 50) * 50;
+        gridY = Math.floor((mouseY + (camera.y + 20 - gameHeight / 2)) / 50) * 50;
+        distX = Math.abs(playerX - gridX);
+        distY = Math.abs(playerY - gridY);
+        //controls
+        if (!menuOpen) {
+            if (isCreator && (keyDown("s") || keyDown("down"))) {
+                playerVelocityY = 5;
+            } else if (isCreator) {
+                playerVelocityY = 0;
             } else {
-                tint(255);
+                playerVelocityY += gravity;
             }
-            if (block["type"] == "dirt") {
-                image(block_dirt, block["x"], block["y"], 50, 50);
-            } else if (block["type"] == "grass") {
-                image(block_grass, block["x"], block["y"], 50, 50);
-            } else if (block["type"] == "leaves") {
-                image(block_leaves, block["x"], block["y"], 50, 50);
-            } else if (block["type"] == "planks") {
-                image(block_planks, block["x"], block["y"], 50, 50);
-            } else if (block["type"] == "stone") {
-                image(block_stone, block["x"], block["y"], 50, 50);
-            } else if (block["type"] == "wood") {
-                image(block_wood, block["x"], block["y"], 50, 50);
-            } else if (block["type"] == "quartz") {
-                image(block_quartz, block["x"], block["y"], 50, 50);
-            } else if (block["type"] == "glass") {
-                image(block_glass, block["x"], block["y"], 50, 50);
-            } else if (block["type"] == "slime") {
-                image(block_slime, block["x"], block["y"], 50, 50);
-            } else if (block["type"] == "final") {
-                image(block_final, block["x"], block["y"], 50, 50);
-            } else if (block["type"] == "teleporter") {
-                image(block_teleporter, block["x"], block["y"], 50, 50);
-            } else if (block["type"] == "spawner") {
-                image(block_spawner, block["x"], block["y"], 50, 50);
+            if ((keyDown("w") || keyDown("up") || keyDown("space")) && isCreator) {
+                playerVelocityY = -5;
+            } else if ((keyDown("w") || keyDown("up") || keyDown("space")) && canJump) {
+                playerVelocityY = -10;
             }
-            if (collision(gridX, gridY, block["x"], block["y"])) {
-                hovering = readingBlockId
+            if (keyDown("a") || keyDown("left")) {
+                playerVelocityX = -5;
+            }
+            else if (keyDown("d") || keyDown("right")) {
+                playerVelocityX = 5;
+            } else {
+                playerVelocityX = 0;
             }
         }
-        readingBlockId += 1;
-    }
-    //player
-    tint(255)
-    playerX += playerVelocityX;
-    playerY += playerVelocityY;
-    if (playerY > mapdata["void"] && !isCreator) {
-        playerX = mapdata["spawn"][0];
-        playerY = mapdata["spawn"][1];
-    }
-    camera.x = playerX;
-    camera.y = playerY;
-    if (playerVelocityX < 0) {
-        image(asset_player_flip, playerX, playerY, 50, 50);
-    } else {
-        image(asset_player, playerX, playerY, 50, 50);
-    }
-    tint(255, 127)
-    if (action == "placing") {
-        image(block_planks, gridX, gridY, 50, 50);
-    } else if (action == "removing") {
-        image(asset_pick, gridX, gridY, 50, 50);
-    } else if (action == "editing") {
-        image(asset_axe, gridX, gridY, 50, 50);
-    } else {
-        fill("rgba(0,0,0,0)");
-        stroke("white");
-        strokeWeight(1);
-        rect(gridX, gridY, 50, 50);
-    }
-    if (isCreator) {
-        stroke("red")
-        line(camera.x - gameWidth / 2, mapdata["void"], camera.x + gameWidth / 2, mapdata["void"]);
-        stroke("green");
-        text("X: " + gridX + " Y: " + gridY, camera.x - 10, camera.y - gameHeight / 3 + 10)
-    }
-    //low upd
-    if (lowUpdates >= 15) {
-        previousGameWidth = gameWidth;
-        previousGameHeight = gameHeight;
-        gameWidth = window.innerWidth;
-        gameHeight = window.innerHeight;
-        if (gameWidth != previousGameWidth || gameHeight != previousGameHeight) {
-            console.info("Change Game Window Size");
-            resizeCanvas(gameWidth, gameHeight)
+        //bg
+        if (mapdata["bg"] == "plains") {
+            image(bg_plains, camera.x - gameWidth / 2, camera.y - gameHeight / 2, gameWidth, gameHeight);
+        } else if (mapdata["bg"] == "islandy") {
+            image(bg_islandy, camera.x - gameWidth / 2, camera.y - gameHeight / 2, gameWidth, gameHeight);
+        } else {
+            image(bg_empty, camera.x - gameWidth / 2, camera.y - gameHeight / 2, gameWidth, gameHeight);
         }
-        lowUpdates = 0;
-    } else {
-        lowUpdates += 1
+        //blocks
+        readingBlockId = 0;
+        canJump = false;
+        for (block of mapdata["blocks"]) {
+            if (Math.abs(playerX - (block["x"]+25)) < gameWidth / 2 && Math.abs(playerY - (block["y"]+25)) < gameHeight / 3) {
+                if (block["interactive"]) {
+                    if (collision(playerX, playerY, block["x"], block["y"]) && !isCreator) {
+                        functionalBlock(readingBlockId);
+                    }
+                } else if (block["solid"]) {
+                    if (collision(playerX + playerVelocityX, playerY, block["x"], block["y"]) && !isCreator) {
+                        playerVelocityX = 0;
+                    }
+                    if (collision(playerX, playerY + playerVelocityY, block["x"], block["y"]) && !isCreator) {
+                        playerVelocityY = 0;
+                    }
+                    if (collision(playerX, playerY + 10, block["x"], block["y"]) || isCreator) {
+                        canJump = true;
+                    }
+                }
+                if (block["tint"] && block["solid"]) {
+                    tint(block["tint"][0], block["tint"][1], block["tint"][2], block["tint"][3]);
+                } else if (block["tint"] && !block["solid"]) {
+                    tint(block["tint"][0] - 50, block["tint"][1] - 50, block["tint"][2] - 50, block["tint"][3]);
+                } else if (!block["solid"]) {
+                    tint(150, 150, 150);
+                } else {
+                    tint(255);
+                }
+                if (block["type"] == "dirt") {
+                    image(block_dirt, block["x"], block["y"], 50, 50);
+                } else if (block["type"] == "grass") {
+                    image(block_grass, block["x"], block["y"], 50, 50);
+                } else if (block["type"] == "leaves") {
+                    image(block_leaves, block["x"], block["y"], 50, 50);
+                } else if (block["type"] == "planks") {
+                    image(block_planks, block["x"], block["y"], 50, 50);
+                } else if (block["type"] == "stone") {
+                    image(block_stone, block["x"], block["y"], 50, 50);
+                } else if (block["type"] == "wood") {
+                    image(block_wood, block["x"], block["y"], 50, 50);
+                } else if (block["type"] == "quartz") {
+                    image(block_quartz, block["x"], block["y"], 50, 50);
+                } else if (block["type"] == "glass") {
+                    image(block_glass, block["x"], block["y"], 50, 50);
+                } else if (block["type"] == "slime") {
+                    image(block_slime, block["x"], block["y"], 50, 50);
+                } else if (block["type"] == "final") {
+                    image(block_final, block["x"], block["y"], 50, 50);
+                } else if (block["type"] == "teleporter") {
+                    image(block_teleporter, block["x"], block["y"], 50, 50);
+                } else if (block["type"] == "spawner") {
+                    image(block_spawner, block["x"], block["y"], 50, 50);
+                } else if (block["type"] == "chest") {
+                    image(block_chest, block["x"], block["y"], 50, 50);
+                }
+                if (collision(gridX, gridY, block["x"], block["y"])) {
+                    hovering = readingBlockId
+                }
+            }
+            readingBlockId += 1;
+        }
+        //player
+        tint(255)
+        playerX += playerVelocityX;
+        playerY += playerVelocityY;
+        if (playerY > mapdata["void"] && !isCreator) {
+            playerX = mapdata["spawn"][0];
+            playerY = mapdata["spawn"][1];
+        }
+        camera.x = playerX;
+        camera.y = playerY;
+        if (playerVelocityX < 0) {
+            image(asset_player_flip, playerX, playerY, 50, 50);
+        } else {
+            image(asset_player, playerX, playerY, 50, 50);
+        }
+        tint(255, 127)
+        if (action == "placing") {
+            image(block_planks, gridX, gridY, 50, 50);
+        } else if (action == "removing") {
+            image(asset_pick, gridX, gridY, 50, 50);
+        } else if (action == "editing") {
+            image(asset_axe, gridX, gridY, 50, 50);
+        } else {
+            fill("rgba(0,0,0,0)");
+            stroke("white");
+            strokeWeight(1);
+            rect(gridX, gridY, 50, 50);
+        }
+        if (isCreator) {
+            stroke("red")
+            line(camera.x - gameWidth / 2, mapdata["void"], camera.x + gameWidth / 2, mapdata["void"]);
+            stroke("green");
+            text("X: " + gridX + " Y: " + gridY, camera.x - 10, camera.y - gameHeight / 3 + 10)
+        }
+        //low upd
+        if (lowUpdates >= 15) {
+            previousGameWidth = gameWidth;
+            previousGameHeight = gameHeight;
+            gameWidth = window.innerWidth;
+            gameHeight = window.innerHeight;
+            if (gameWidth != previousGameWidth || gameHeight != previousGameHeight) {
+                console.info("Change Game Window Size");
+                resizeCanvas(gameWidth, gameHeight)
+            }
+            lowUpdates = 0;
+        } else {
+            lowUpdates += 1
+        }
     }
 }
 
@@ -295,7 +307,8 @@ function selectFromInventory(slot) {
         inventory[slot]["type"] == "slime" ||
         inventory[slot]["type"] == "final" ||
         inventory[slot]["type"] == "teleporter" ||
-        inventory[slot]["type"] == "spawner"
+        inventory[slot]["type"] == "spawner" ||
+        inventory[slot]["type"] == "chest"
     ) {
         action = "placing";
         using = slot;
